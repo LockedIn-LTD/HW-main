@@ -1,4 +1,4 @@
-#include "I2CDevice.h"
+#include "I2CDevice.hpp"
 #include <iostream>
 
 I2CDevice::I2CDevice(uint8_t address, const char* i2cBus) {
@@ -16,9 +16,9 @@ I2CDevice::~I2CDevice() {
 }
 
 bool I2CDevice::write(const uint8_t* data, size_t length) {
-    return (write(i2cFile, data, length) == (ssize_t)length);
+    return (::write(i2cFile, data, length) == (ssize_t)length);
 }
 
 bool I2CDevice::read(uint8_t* data, size_t length) {
-    return (read(i2cFile, data, length) == (ssize_t)length);
+    return (::read(i2cFile, data, length) == (ssize_t)length);
 }
