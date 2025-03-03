@@ -31,8 +31,3 @@
 *.out
 *.app
 
-# Ignore executables (files without extensions)
-*
-
-# But allow tracked files and directories
-!*/
