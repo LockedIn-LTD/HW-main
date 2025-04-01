@@ -134,9 +134,8 @@ MAX30102::MAX30102() {
  * Returns negative number on failure.
  * Returns sensor revision on success.
  */
-int MAX30102::begin(uint32_t i2cSpeed, uint8_t i2cAddr) {
+int MAX30102::begin(uint32_t i2cSpeed, uint8_t i2cAddr, const char* devName) {
 	// [TODO] Set I2C Speed.
-	const char* devName = "/dev/i2c-7";
 
 	// Open the I2C bus
 	int fd = open(devName, O_RDWR);

@@ -1,4 +1,5 @@
 #include "ADS1115/ADS1115.hpp"
+#include "MAX30102/JS_HeartRate.cpp"
 #include <iostream>
 #include <cstdio>
 #include <sys/ioctl.h>
@@ -14,6 +15,10 @@ int main() {
         printf("Failed to create file to start I2C.");
         return 0;
     }
+
+    // HRSInterface hrs;
+    // // MAX30102 I2C channel set in MAX30102.hpp
+    // hrs.start();
 
     ADS1115 pressureSensor;
 
@@ -37,6 +42,10 @@ int main() {
     while ( i > 0) {
         uint16_t rawData = pressureSensor.readADC();
         std::cout << "ADC Value: " << rawData << std::endl;
+
+        // // Read IR Heart Rate
+        // std::cout << "IR Heart Rate- Latest:" << hrs.getLatestHeartRate() << ", SAFE:" << hrs.getSafeHeartRate()<< std::endl;
+        
         i--;
     }
 

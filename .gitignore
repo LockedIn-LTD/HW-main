@@ -33,3 +33,10 @@
 
 /.vscode
 
+# Max 30102 build output files
+test
+test2
+test3
+
+# Main build file
+main

@@ -14,7 +14,7 @@
 class MAX30102 {
 	public:
 		MAX30102(void);
-		int begin(uint32_t i2cSpeed = I2C_SPEED_STANDARD, uint8_t i2cAddr = MAX30102_ADDRESS);
+		int begin(uint32_t i2cSpeed = I2C_SPEED_STANDARD, uint8_t i2cAddr = MAX30102_ADDRESS, const char* devName = "/dev/i2c-7");
 
 		uint32_t getRed(void); // Returns immediate red value
 		uint32_t getIR(void); // Returns immediate IR value
