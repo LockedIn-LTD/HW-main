@@ -27,9 +27,9 @@ jobs:
             exit 1
           fi
 
-          # Enforce <name>/<feature> convention
-          if [[ ! "$BRANCH_NAME" =~ ^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$ ]]; then
-            echo "❌ Branch name does not follow '<name>/<feature>' convention."
+          # Enforce <name>-<something> convention
+          if [[ ! "$BRANCH_NAME" =~ ^[a-zA-Z0-9._-]+-[a-zA-Z0-9._-]+$ ]]; then
+            echo "❌ Branch name does not follow '<name>-<feature>' convention (e.g. abdullah-ci)."
             exit 1
           fi
 
