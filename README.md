@@ -6,7 +6,7 @@ Instructions to commit to repository:
 
 Create a branch in this format:
 
-``` git switch main``` \
+```git switch main``` \
 ``` git pull ``` \
 ``` git switch -c abdullah/<features> ``` 
 
