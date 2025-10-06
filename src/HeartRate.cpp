@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
-#include "DigitalFilters.hpp"
-#include "HeartRate.hpp"
+#include <DigitalFilters.hpp>
+#include <HeartRate.hpp>
 
 LowPassFilter lpf(0.08, M_PI);
 HighPassFilter hpf(0.08, M_PI);

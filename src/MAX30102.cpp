@@ -4,8 +4,8 @@
 #include <iostream>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "i2c-dev.h"
-#include "MAX30102.hpp"
+#include <i2c-dev.h>
+#include <MAX30102.hpp>
 
 // Status Registers
 static const uint8_t REG_INTSTAT1 =			0x00;

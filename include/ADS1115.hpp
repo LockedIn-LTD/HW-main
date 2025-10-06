@@ -19,13 +19,9 @@
 #define ADS1115_CONFIGURATION_REG 0x01  // Register to set configuration.
 
 //ADS1115 Configurations
-#define ADS1115_DEFAULT_CONFIG 0x8383 
-#define ADS1115_GAIN_1_CONFIG 0x8583 
-#define ADS1115_GAIN_2_CONFIG 0x8783 
-#define ADS1115_GAIN_3_CONFIG 0x8983 
-#define ADS1115_GAIN_4_CONFIG 0x8B83 
-#define ADS1115_GAIN_5_CONFIG 0x8D83 
-
+#define ADS1115_CONTINUOUS_CONFIG__A0 0xC4E3
+#define ADS1115_CONTINUOUS_CONFIG_A1 0xD4E3
+//1100010011100011
 
 
 class ADS1115 {
@@ -38,7 +34,8 @@ class ADS1115 {
 
     public:
         ADS1115(uint8_t address = ADS1115_ADDRS);
-        bool init(); // Initialize the ADS sensor
+        bool initA0(); // Initialize the ADS sensor
+        bool initA1();
         int16_t readADC();
         bool setConfig(uint16_t config);
         int getFile() { return file;}

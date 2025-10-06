@@ -1,4 +1,4 @@
-#include "HeartRate.hpp"
+#include <HeartRate.hpp>
 
 class HRSInterface {
 
