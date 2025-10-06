@@ -1,28 +1,21 @@
-# MIT License
-# Copyright (c) 2019-2022 JetsonHacks
-
-# Using a CSI camera (such as the Raspberry Pi Version 2) connected to a
-# NVIDIA Jetson Nano Developer Kit using OpenCV
-# Drivers for the camera and OpenCV are included in the base image
-
 import cv2
+# Import the numpy library for array manipulation
+import numpy as np
 
-""" 
-gstreamer_pipeline returns a GStreamer pipeline for capturing from the CSI camera
-Flip the image by setting the flip_method (most common values: 0 and 2)
-display_width and display_height determine the size of each camera pane in the window on the screen
-Default 1920x1080 displayd in a 1/4 size window
-"""
+# --- GStreamer Pipeline Function (Unchanged - Already Optimal) ---
 
 def gstreamer_pipeline(
     sensor_id=0,
     capture_width=1920,
     capture_height=1080,
-    display_width=960,
-    display_height=540,
+    display_width=640, # Adjusted for combined view
+    display_height=360, # Adjusted for combined view
     framerate=30,
     flip_method=0,
 ):
+    # This pipeline is already optimized:
+    # nvarguscamerasrc -> ISP
+    # nvvidconv       -> VIC/JPEG engine for scaling/color conversion
     return (
         "nvarguscamerasrc sensor-id=%d ! "
         "video/x-raw(memory:NVMM), width=(int)%d, height=(int)%d, framerate=(fraction)%d/1 ! "
@@ -41,35 +34,61 @@ def gstreamer_pipeline(
         )
     )
 
+# --- Optimized show_two_cameras Function ---
 
-def show_camera():
-    window_title = "CSI Camera"
+def show_two_cameras_optimized():
+    window_title = "Dual CSI Cameras (Optimized)"
+    
+    # Define camera display dimensions
+    display_w = 640  
+    display_h = 360
 
-    # To flip the image, modify the flip_method parameter (0 and 2 are the most common)
-    print(gstreamer_pipeline(flip_method=0))
-    video_capture = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
-    if video_capture.isOpened():
+    # 1. Open both video capture objects
+    # GStreamer pipelines leverage ISP/VIC for accelerated capture and scaling
+    video_capture_0 = cv2.VideoCapture(
+        gstreamer_pipeline(sensor_id=0, display_width=display_w, display_height=display_h), 
+        cv2.CAP_GSTREAMER
+    )
+    video_capture_1 = cv2.VideoCapture(
+        gstreamer_pipeline(sensor_id=1, display_width=display_w, display_height=display_h), 
+        cv2.CAP_GSTREAMER
+    )
+
+    if video_capture_0.isOpened() and video_capture_1.isOpened():
         try:
-            window_handle = cv2.namedWindow(window_title, cv2.WINDOW_AUTOSIZE)
+            cv2.namedWindow(window_title, cv2.WINDOW_AUTOSIZE)
+            
+            # --- Main Loop ---
             while True:
-                ret_val, frame = video_capture.read()
-                # Check to see if the user closed the window
-                # Under GTK+ (Jetson Default), WND_PROP_VISIBLE does not work correctly. Under Qt it does
-                # GTK - Substitute WND_PROP_AUTOSIZE to detect if window has been closed by user
+                ret_val_0, frame_0 = video_capture_0.read()
+                ret_val_1, frame_1 = video_capture_1.read()
+                
+                if not (ret_val_0 and ret_val_1):
+                    print("Error: Could not read frames from both cameras.")
+                    break
+
+                
+                combined_frame = np.concatenate((frame_0, frame_1), axis=1)
+
+                
                 if cv2.getWindowProperty(window_title, cv2.WND_PROP_AUTOSIZE) >= 0:
-                    cv2.imshow(window_title, frame)
+                    cv2.imshow(window_title, combined_frame)
                 else:
                     break 
+                
                 keyCode = cv2.waitKey(10) & 0xFF
-                # Stop the program on the ESC key or 'q'
                 if keyCode == 27 or keyCode == ord('q'):
                     break
         finally:
-            video_capture.release()
+            video_capture_0.release()
+            video_capture_1.release()
             cv2.destroyAllWindows()
     else:
-        print("Error: Unable to open camera")
+        print("Error: Unable to open one or both cameras. Check sensor-id (0 and 1) and connections.")
+        if video_capture_0.isOpened(): video_capture_0.release()
+        if video_capture_1.isOpened(): video_capture_1.release()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
-    show_camera()
+    show_two_cameras_optimized()
