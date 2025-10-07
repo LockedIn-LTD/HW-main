@@ -1,64 +1,66 @@
-/**
- * @file ADS1115.cpp
- * @author DriveSense Inc.
- * @brief Contains implementation for the ADS1115 Object.
- */
-
 #include <ADS1115.hpp>
 
-ADS1115::ADS1115(uint8_t address) : file(-1) {};
-
-uint16_t ADS1115::readFromReg(int file, uint8_t reg)
+ADS1115::ADS1115(int fd, uint8_t address)
+    : file(fd), i2cAddress(address)
 {
-    uint8_t buffer[2];
-
-    if (write(file, &reg, 1) != 1)
-    {
-        printf("Failed to write to reg %p ", reg);
-        return 0;
+    if (file >= 0 && !setSlaveAddress()) {
+        printf("Failed to set I2C address %02X\n", i2cAddress);
     }
-
-    if (read(file, buffer, 2) != 2)
-    {
-        printf("Failed to read from reg %p", reg);
-        return 0;
-    }
-
-    return (buffer[0] << 8) | buffer[1];
 }
 
-bool ADS1115::writeToReg(int file, uint8_t reg, uint16_t value)
+void ADS1115::setFile(int fd)
 {
-    uint8_t data[3];
-    data[0] = reg;          // register we are writing to
-    data[1] = value >> 8;   // High byte
-    data[2] = value & 0xFF; // Low byte
+    file = fd;
+    if (!setSlaveAddress()) {
+        printf("Failed to set I2C address %02X\n", i2cAddress);
+    }
+}
 
-    if (write(file, data, 3) != 3)
-    {
-        printf("Failed to write %p to reg %p ", value, reg);
+bool ADS1115::setSlaveAddress()
+{
+    if (ioctl(file, I2C_SLAVE, i2cAddress) < 0) {
+        perror("ioctl I2C_SLAVE failed");
         return false;
     }
-
     return true;
 }
 
-bool ADS1115::initA0()
+bool ADS1115::writeReg(uint8_t reg, uint16_t value)
 {
-    return writeToReg(this->file, ADS1115_CONFIGURATION_REG, ADS1115_CONTINUOUS_CONFIG__A0);
+    uint8_t buffer[3] = { reg, uint8_t(value >> 8), uint8_t(value & 0xFF) };
+    if (write(file, buffer, 3) != 3) {
+        printf("Failed to write %04X to reg %02X\n", value, reg);
+        return false;
+    }
+    return true;
 }
 
-bool ADS1115::initA1()
+uint16_t ADS1115::readReg(uint8_t reg)
 {
-    return writeToReg(this->file, ADS1115_CONFIGURATION_REG, ADS1115_CONTINUOUS_CONFIG_A1);
+    uint8_t buf[2];
+    if (write(file, &reg, 1) != 1) {
+        printf("Failed to write reg %02X\n", reg);
+        return 0;
+    }
+    if (read(file, buf, 2) != 2) {
+        printf("Failed to read reg %02X\n", reg);
+        return 0;
+    }
+    return (buf[0] << 8) | buf[1];
 }
 
-bool ADS1115::setConfig(uint16_t config)
+int16_t ADS1115::readADC(uint8_t channel)
 {
-    return writeToReg(this->file, ADS1115_CONFIGURATION_REG, config);
-}
+    uint16_t mux = (channel == 0) ? ADS1115_CONFIG_MUX_A0 : ADS1115_CONFIG_MUX_A1;
+    uint16_t config = ADS1115_CONFIG_OS_SINGLE | mux | ADS1115_CONFIG_DEFAULT;
 
-int16_t ADS1115::readADC()
-{
-    return static_cast<int16_t>(readFromReg(this->file, ADS1115_CONVERSION_REG));
+    if (!writeReg(ADS1115_CONFIG_REG, config)) {
+        printf("Failed to start conversion on channel %d\n", channel);
+        return 0;
+    }
+
+    // Wait for conversion (approx 1.2ms for 860 SPS)
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    return static_cast<int16_t>(readReg(ADS1115_CONVERSION_REG));
 }
