@@ -1,5 +1,4 @@
 #include <ADS1115.hpp>
-#include "JS_HeartRate.cpp"
 #include <iostream>
 #include <cstdio>
 #include <sys/ioctl.h>
@@ -18,9 +17,6 @@ int main()
         return 0;
     }
 
-    // HRSInterface hrs;
-    // // MAX30102 I2C channel set in MAX30102.hpp
-    // hrs.start();
 
     ADS1115 pressureSensor;
 
@@ -34,29 +30,27 @@ int main()
     }
 
 
-    int i = 10;
+    int i = 1;
 
     while (i > 0)
     {   
         if (i % 2 == 0) {
-            if (pressureSensor.init_A0()){
-                printf("Succesfully initialized the A0 pressure sensor!");
+            i = 1;
+            if (pressureSensor.initA0()){
+                printf("A0: ");
             }
         } else {
-            if (pressureSensor.init_A1()){
-                printf("Succesfully initialized the A1 pressure sensor!");
+            i = 2;
+            if (pressureSensor.initA1()){
+                printf("A1: ");
             }
         }
         
         uint16_t rawData = pressureSensor.readADC();
-        std::cout << "ADC Value: " << rawData << std::endl;
+        std::cout << rawData << std::endl;
 
         
-        // // Read IR Heart Rate
-        // std::cout << "IR Heart Rate- Latest:" << hrs.getLatestHeartRate() << ", SAFE:" << hrs.getSafeHeartRate()<< std::endl;
-
-        // i--;
-        usleep(1000000);
+        usleep(1000);
     }
 
     close(file);

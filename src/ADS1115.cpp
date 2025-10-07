@@ -43,7 +43,7 @@ bool ADS1115::writeToReg(int file, uint8_t reg, uint16_t value)
     return true;
 }
 
-bool ADS1115::initAO()
+bool ADS1115::initA0()
 {
     return writeToReg(this->file, ADS1115_CONFIGURATION_REG, ADS1115_CONTINUOUS_CONFIG__A0);
 }
