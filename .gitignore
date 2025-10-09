@@ -34,10 +34,4 @@
 /.vscode
 /build/*
 /out/*
-# Max 30102 build output files
-test
-test2
-test3
 
-# Main build file
-main
