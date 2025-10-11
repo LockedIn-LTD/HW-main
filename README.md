@@ -8,7 +8,7 @@ Create a branch in this format:
 
 ```git switch main``` \
 ``` git pull ``` \
-``` git switch -c abdullah/<features> ``` 
+``` git switch -c <name>-<features> ``` 
 
 To push your changes:
 

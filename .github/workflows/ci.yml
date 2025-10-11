@@ -8,8 +8,7 @@ on:
 
 jobs:
   branch-check:
-    # 1. Add an 'if' condition to only run this job if the ref (branch) is NOT 'main' or 'master'.
-    # This ensures the job is skipped after a merge to main.
+    # 1. SKIP this job on 'main' and 'master' to prevent failure after a merge.
     if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
@@ -24,8 +23,6 @@ jobs:
           
           echo "Branch name: $BRANCH_NAME"
           
-          # Since the job is skipped for main/master, we only need to check the naming convention here.
-          
           # Enforce <name>-<something> convention
           if [[ ! "$BRANCH_NAME" =~ ^[a-zA-Z0-9._-]+-[a-zA-Z0-9._-]+$ ]]; then
             echo "❌ Branch name does not follow '<name>-<feature>' convention (e.g. abdullah-ci)."
@@ -34,33 +31,43 @@ jobs:
           
           echo "✅ Branch name is valid."
 
-  syntax-check:
+  build-and-test:
     runs-on: ubuntu-latest
-    # 2. Modify the 'needs' dependency.
-    #    Use a conditional expression to only require 'branch-check' if it ran and succeeded.
-    #    Since this job runs on 'main', it will proceed even if 'branch-check' was skipped.
     needs: branch-check
+    # 2. RUN this job even if 'branch-check' was SKIPPED or FAILED. 
+    # This ensures tests run on 'main' after a merge.
+    if: ${{ always() }} 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      # Install C++ dependencies (OpenCV)
-      - name: Install C++ dependencies (OpenCV)
+      # 3. Install necessary C++ system dependencies
+      - name: Install C++ Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopencv-dev
+          sudo apt-get install -y libopencv-dev libi2c-dev cmake
           
-      # Python syntax check
+      - name: Create Build Directory
+        run: mkdir build
+        
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+        
+      - name: Build Project
+        # Compiles all source code and test executables
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      - name: Run C++ Tests (ctest)
+        # Executes the tests defined in your CMakeLists.txt
+        run: |
+          cd build
+          ctest --output-on-failure
+          
+      # 4. Preserve Python Syntax Check
       - name: Check Python syntax
         run: |
           python3 -m py_compile $(find . -name "*.py")
-          
-      # C++ syntax check
-      - name: Check C++ syntax
-        run: |
-          # Find all C/C++ files, filter out the non-existent simple_camera.cpp path, 
-          # and include the necessary OpenCV compiler flags.
-          for file in $(find . -type f -name "*.cpp" -o -name "*.hpp" -o -name "*.h" | grep -v './cameraTest/'); do
-            echo "Checking $file"
-            g++ -fsyntax-only -I/usr/include/opencv4/ -I/usr/include/ "$file"
-          done
