@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  branch-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch naming convention
+        run: |
+          # Detect branch name differently for push vs PR
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BRANCH_NAME="${GITHUB_HEAD_REF}"
+          else
+            BRANCH_NAME="${GITHUB_REF##*/}"
+          fi
+          
+          echo "Branch name: $BRANCH_NAME"
+          
+          # Block direct pushes/PRs from main or master
+          if [[ "$BRANCH_NAME" == "main" || "$BRANCH_NAME" == "master" ]]; then
+            echo "❌ Direct pushes/PRs from $BRANCH_NAME are not allowed."
+            exit 1
+          fi
+          
+          # Enforce <name>-<something> convention
+          if [[ ! "$BRANCH_NAME" =~ ^[a-zA-Z0-9._-]+-[a-zA-Z0-9._-]+$ ]]; then
+            echo "❌ Branch name does not follow '<name>-<feature>' convention (e.g. abdullah-ci)."
+            exit 1
+          fi
+          
+          echo "✅ Branch name is valid."
+
+  syntax-check:
+    runs-on: ubuntu-latest
+    needs: branch-check
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      # ------------------------------------------------------------------
+      # This provides the necessary opencv2/opencv.hpp header file.
+      # ------------------------------------------------------------------
+      - name: Install C++ dependencies (OpenCV)
+        run: |
+          sudo apt-get update; sudo apt-get install -y libopencv-dev
+          
+      # Python syntax check
+      - name: Check Python syntax
+        run: |
+          python3 -m py_compile $(find . -name "*.py")
+          
+      # C++ syntax check
+      - name: Check C++ syntax
+        run: |
+          for file in $(find . -name "*.cpp" -o -name "*.hpp" -o -name "*.h"); do
+            echo "Checking $file"
+            g++ -fsyntax-only "$file"
+          done
