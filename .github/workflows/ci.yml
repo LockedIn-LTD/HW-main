@@ -41,6 +41,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      # ------------------------------------------------------------------
+      # This provides the necessary opencv2/opencv.hpp header file.
+      # ------------------------------------------------------------------
+      - name: Install C++ dependencies (OpenCV)
+        run: |
+          sudo apt-get update; sudo apt-get install -y libopencv-dev
 
       # Python syntax check
       - name: Check Python syntax
