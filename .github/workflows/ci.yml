@@ -18,21 +18,21 @@ jobs:
           else
             BRANCH_NAME="${GITHUB_REF##*/}"
           fi
-
+          
           echo "Branch name: $BRANCH_NAME"
-
+          
           # Block direct pushes/PRs from main or master
           if [[ "$BRANCH_NAME" == "main" || "$BRANCH_NAME" == "master" ]]; then
             echo "❌ Direct pushes/PRs from $BRANCH_NAME are not allowed."
             exit 1
           fi
-
+          
           # Enforce <name>-<something> convention
           if [[ ! "$BRANCH_NAME" =~ ^[a-zA-Z0-9._-]+-[a-zA-Z0-9._-]+$ ]]; then
             echo "❌ Branch name does not follow '<name>-<feature>' convention (e.g. abdullah-ci)."
             exit 1
           fi
-
+          
           echo "✅ Branch name is valid."
 
   syntax-check:
@@ -41,18 +41,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        
       # ------------------------------------------------------------------
       # This provides the necessary opencv2/opencv.hpp header file.
       # ------------------------------------------------------------------
-      - name: Install C++ dependencies (OpenCV)
-        run: |
-          sudo apt-get update; sudo apt-get install -y libopencv-dev
-
+      - name: Install C++ dependencies (OpenCV)
+        run: |
+          sudo apt-get update; sudo apt-get install -y libopencv-dev
+          
       # Python syntax check
       - name: Check Python syntax
         run: |
           python3 -m py_compile $(find . -name "*.py")
-
+          
       # C++ syntax check
       - name: Check C++ syntax
         run: |
