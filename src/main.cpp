@@ -75,8 +75,9 @@ void imuSensorTask() {
 }
 
 void heartrateTask(){
+    SensorData data = {0};
     while (true) {
-        SensorData data;
+        
         bool readSuccess;
         {
             std::lock_guard<std::mutex> lock(i2c_mutex);
@@ -85,14 +86,14 @@ void heartrateTask(){
         {
             std::lock_guard<std::mutex> lock(cout_mutex);
             if (readSuccess) {
-                cout << "Heart Rate Sensor Readings - Heart Rate: " << data.heartRate
-                     << " BPM, SpO2: " << data.spO2 << "% , Finger Present: "
-                     << (data.isFingerPresent ? "Yes" : "No") << endl;
+                cout << "Heart Rate Sensor Readings - Heart Rate: " << setw(8) << data.heartRate
+                << " BPM, SpO2: " << setw(8) << data.spO2 << "% , Finger Present: "
+                << (data.isFingerPresent ? "Yes" : "No") << endl;
             } else {
                 cout << "Failed to read from Heart Rate Sensor." << endl;
             }
         }
-        this_thread::sleep_for(chrono::milliseconds(2000)); // Adjust the sleep duration as needed
+        this_thread::sleep_for(chrono::milliseconds(10)); // Adjust the sleep duration as needed
     }
 }
 
@@ -102,11 +103,11 @@ int main() {
     setupSensors();
 
     thread pressureSensorRead(pressureSensorTask);
-    //thread imuSensorRead(imuSensorTask);
+    // thread imuSensorRead(imuSensorTask);
     thread heartrateSensorRead(heartrateTask);
 
     pressureSensorRead.join();
-    //imuSensorRead.join();
+    // imuSensorRead.join();
     heartrateSensorRead.join();
 
     return 0;
