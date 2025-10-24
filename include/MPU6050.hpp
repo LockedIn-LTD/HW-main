@@ -53,7 +53,6 @@ extern "C" {
 
 class MPU6050 {
 private:
-    void _update();
     void _readRaw();
 
     float _accel_angle[3];
@@ -74,9 +73,9 @@ private:
     float A_OFF_X, A_OFF_Y, A_OFF_Z;
     float G_OFF_X, G_OFF_Y, G_OFF_Z;
 
-    void _startThread();
-
 public:
+    void update();
+
     /**
      * @brief Constructor. Opens the I2C bus and initializes the MPU6050 sensor.
      * @param addr The I2C slave address of the MPU6050 (default 0x68).

@@ -26,6 +26,7 @@ MAX30102 heartbeatSensor (I2C_BUS_7);
 
 void setupSensors() {
     //!accelerometerSensor.calibrate(100) => this one runs its own thread
+    accelerometerSensor.calibrate(100);
     if (!pressureSensor.initialize() || !heartbeatSensor.initialize()) {
         std::lock_guard<std::mutex> lock(cout_mutex);
         cout << "Error initializing sensors!" << endl;
@@ -56,6 +57,7 @@ void imuSensorTask() {
         float roll, pitch, yaw;
         float accX, accY, accZ;
         float gyroX, gyroY, gyroZ;
+        {   accelerometerSensor.update(); }
         {
             std::lock_guard<std::mutex> lock(i2c_mutex);
             accelerometerSensor.getAngle(0, &roll);
@@ -102,13 +104,13 @@ int main() {
     // create objects for each sensor
     setupSensors();
 
-    thread pressureSensorRead(pressureSensorTask);
-    // thread imuSensorRead(imuSensorTask);
-    thread heartrateSensorRead(heartrateTask);
+    //thread pressureSensorRead(pressureSensorTask);
+    thread imuSensorRead(imuSensorTask);
+    //thread heartrateSensorRead(heartrateTask);
 
-    pressureSensorRead.join();
-    // imuSensorRead.join();
-    heartrateSensorRead.join();
+    //pressureSensorRead.join();
+    imuSensorRead.join();
+    //heartrateSensorRead.join();
 
     return 0;
 }

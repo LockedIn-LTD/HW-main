@@ -51,7 +51,7 @@ void MPU6050::_readRaw() {
 }
 
 // Complementary Filter Update (runs in background thread)
-void MPU6050::_update() {
+void MPU6050::update() {
     if (!_calibrated || f_dev < 0) return;
 
     // Calculate time step (dt)
@@ -86,15 +86,6 @@ void MPU6050::_update() {
         _angle[i] = TAU*(_gyro_angle[i]) + (1-TAU)*(_accel_angle[i]);
 }
 
-// Start background update thread
-void MPU6050::_startThread() {
-    std::thread([this]() {
-        while (true) {
-            this->_update();
-            std::this_thread::sleep_for(std::chrono::milliseconds(10)); // ~100Hz update rate
-        }
-    }).detach();
-}
 
 // Calibration function
 void MPU6050::calibrate(int samples) {
@@ -132,7 +123,6 @@ void MPU6050::calibrate(int samples) {
     G_OFF_Z = (float)gy_sum / samples;
 
     _calibrated = true;
-    _startThread(); // Start the continuous update thread after calibration
 }
 
 void MPU6050::getAccel(float *x, float *y, float *z) { _readRaw(); *x = ax; *y = ay; *z = az; }
