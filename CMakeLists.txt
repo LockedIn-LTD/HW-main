@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --- 1. Dependency Management ---
 # ------------------------------------------------------------------------
 
+find_library(I2C_LIB i2c)
+if(NOT I2C_LIB)
+    message(FATAL_ERROR "libi2c not found. Install with: sudo apt install libi2c-dev")
+endif()
 find_package(CURL REQUIRED)
 
 #Add nlohmann/json (JSON Handling) using FetchContent

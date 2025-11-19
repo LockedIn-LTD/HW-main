@@ -254,7 +254,7 @@ void printDataTask() {
         std::lock_guard<std::mutex> lock(cout_mutex);
         std::cout << data_to_push << std::endl;
         // Push data every 5 seconds (adjust as needed)
-        this_thread::sleep_for(chrono::milliseconds(5000));
+        this_thread::sleep_for(chrono::milliseconds(2000));
     }
 }
 
@@ -269,11 +269,11 @@ int main() {
     thread heartrateSensorRead2(heartrateTask2);
 
     if(VERBOSE_OUT){
-        thread printData(printDataTask);
-        printData.join();
+        
     }
     
-
+    thread printData(printDataTask);
+    printData.join();
     pressureSensorRead.join();
     imuSensorRead.join();
     heartrateSensorRead.join();

@@ -9,9 +9,8 @@ import sys
 import argparse 
 
 # --- Configuration (Defaults/Constants) ---
-DEFAULT_WIDTH = 1920
-DEFAULT_HEIGHT = 1080
-DEFAULT_FLIP = 0
+DEFAULT_WIDTH = 1280
+DEFAULT_HEIGHT = 720
 # ---------------------
 
 # IMX219 modes (Argus):
@@ -29,21 +28,15 @@ def get_sensor_mode_and_fps(width, height):
     }
     
     # Check if the requested resolution exactly matches a known mode
-    return mapping.get((int(width), int(height)), (2, 30)) # Default to 1920x1080 @30
+    return mapping.get((int(width), int(height)), (2, 15)) # Default to 1920x1080 @30
 
 
-def gst_pipeline(sensor_id, width, height, fps=None, flip=DEFAULT_FLIP, sensor_mode=None):
+def gst_pipeline(sensor_id, width, height, fps=15, flip=2):
     """Generates the GStreamer pipeline string for nvarguscamerasrc."""
-    
-    # Use the requested width and height for the sensor mode lookup
-    mode_auto, fps_auto = get_sensor_mode_and_fps(width, height) 
-    
-    sensor_mode = sensor_mode if sensor_mode is not None else mode_auto
-    fps = fps if fps is not None else fps_auto
 
     # The pipeline outputs BGR format frames ready for OpenCV
     return (
-        f"nvarguscamerasrc sensor-id={int(sensor_id)} sensor-mode={int(sensor_mode)} "
+        f"nvarguscamerasrc sensor-id={int(sensor_id)} "
         f"bufapi-version=1 ! "
         f"video/x-raw(memory:NVMM), width=(int){int(width)}, height=(int){int(height)}, "
         f"framerate=(fraction){int(fps)}/1, format=(string)NV12 ! "
@@ -55,16 +48,15 @@ def gst_pipeline(sensor_id, width, height, fps=None, flip=DEFAULT_FLIP, sensor_m
     )
 
 
-def open_nvargus(sensor_id, width, height, fps=None, flip=DEFAULT_FLIP, sensor_mode=None):
+def open_nvargus(sensor_id, width, height, fps=15, flip=2):
     """Opens the GStreamer camera capture object and performs a warmup."""
     
     pipeline = gst_pipeline(sensor_id, width, height,
-                            fps=fps, flip=flip, sensor_mode=sensor_mode)
+                            fps=fps, flip=flip)
     
-    mode_auto, fps_auto = get_sensor_mode_and_fps(width, height)
     
     print(
-        f"[INFO] Opening Argus sensor-id={sensor_id} mode={sensor_mode or mode_auto} {width}x{height}@{fps or fps_auto} flip={flip}")
+        f"[INFO] Opening Argus sensor-id={sensor_id} {width}x{height}@{fps} flip={flip}")
     cap = cv.VideoCapture(pipeline, cv.CAP_GSTREAMER)
     if not cap.isOpened():
         raise RuntimeError(
@@ -157,8 +149,8 @@ def parse_args():
     )
     # Argument for flip
     parser.add_argument(
-        '--flip', type=int, default=DEFAULT_FLIP, 
-        help=f'Flip method for nvvidconv (0=none, 1=horizontal, 2=rotate 180, 3=vertical, 4=horiz+diag, 5=horiz+vert, 6=vert+diag, 7=rotate 90, 8=rotate 270) (default: {DEFAULT_FLIP}).'
+        '--flip', type=int, default=2, 
+        help=f'Flip method for nvvidconv (0=none, 1=horizontal, 2=rotate 180, 3=vertical, 4=horiz+diag, 5=horiz+vert, 6=vert+diag, 7=rotate 90, 8=rotate 270) (default: 2).'
     )
     
     args = parser.parse_args()

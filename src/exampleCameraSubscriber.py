@@ -4,10 +4,7 @@
 
 import cv2 as cv
 import time
-import numpy as np # Still useful if you use NumPy operations later
-# --- Import the custom wrapper class ---
-from zmq_video_client import ZMQVideoReceiver 
-# ---------------------------------------
+from zmq_video_client import ZMQVideoReceiver
 
 # --- Configuration ---
 ZMQ_ADDRESS = "tcp://127.0.0.1:5555"
