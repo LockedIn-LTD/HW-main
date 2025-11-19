@@ -5,14 +5,34 @@ project(MAPPLE-WALNUT LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# --- Library Dependencies ---
-# Link libraries
+# ------------------------------------------------------------------------
+# --- 1. Dependency Management ---
+# ------------------------------------------------------------------------
+
+# A. Find essential libraries
 find_library(I2C_LIB i2c)
 if(NOT I2C_LIB)
     message(FATAL_ERROR "libi2c not found. Install with: sudo apt install libi2c-dev")
 endif()
 
-# --- Main Application (MAPPLE-WALNUT) ---
+# B. Find cURL (HTTP Client for Firebase REST)
+find_package(CURL REQUIRED)
+# Install hint for users: sudo apt install libcurl4-openssl-dev
+
+# C. Add nlohmann/json (JSON Handling) using FetchContent
+# This downloads the header-only library during configuration.
+include(FetchContent)
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3 # Use a specific version tag
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
+
+# ------------------------------------------------------------------------
+# --- 2. Main Application (MAPPLE-WALNUT) ---
+# ------------------------------------------------------------------------
 
 # Sources for the main application
 set(APP_SOURCES
@@ -28,10 +48,17 @@ add_executable(MAPPLE-WALNUT ${APP_SOURCES})
 # Include directories
 target_include_directories(MAPPLE-WALNUT
     PRIVATE
-         ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(MAPPLE-WALNUT PRIVATE ${I2C_LIB} pthread)
+# Link all dependencies: i2c, pthreads, cURL, and nlohmann::json
+target_link_libraries(MAPPLE-WALNUT 
+    PRIVATE 
+        ${I2C_LIB} 
+        pthread 
+        CURL::libcurl
+        nlohmann_json
+)
 
 # Optional: define a macro for bus detection
 target_compile_definitions(MAPPLE-WALNUT PRIVATE I2C_BUS_PATH=\"/dev/i2c-7\")
