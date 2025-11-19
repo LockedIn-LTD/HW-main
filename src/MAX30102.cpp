@@ -85,7 +85,7 @@ bool MAX30102::initialize() {
         std::cerr << "Error: MAX30102 Part ID mismatch. Found 0x" << std::hex << (int)partID << std::dec << " (Expected 0x15)" << std::endl;
         return false;
     }
-    std::cout << "MAX30102 found and verified." << std::endl;
+    //std::cout << "MAX30102 found and verified." << std::endl;
 
     // 2. Reset the chip
     writeRegister(REG_MODE_CONFIG, 0x40); // Reset (0x40)
