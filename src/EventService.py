@@ -1,12 +1,10 @@
 PROJECT_ID = "drivesense-c1d4c"
-CREDENTIALS_FILE = "src/db/database_key.json"
 EVENT_COLLECTION = "events"
 DRIVER_COLLECTION = "drivers"
 from typing import Dict
 from EventModel import Event
 from Database import Database
 
-db_handler = Database(PROJECT_ID, credentials_path=CREDENTIALS_FILE)
 class EventService:
     """
     Handles Firestore interactions for creating and linking events.

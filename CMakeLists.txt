@@ -9,13 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --- 1. Dependency Management ---
 # ------------------------------------------------------------------------
 
-
-# B. Find cURL (HTTP Client for Firebase REST)
 find_package(CURL REQUIRED)
-# Install hint for users: sudo apt install libcurl4-openssl-dev
 
-# C. Add nlohmann/json (JSON Handling) using FetchContent
-# This downloads the header-only library during configuration.
+#Add nlohmann/json (JSON Handling) using FetchContent
 include(FetchContent)
 FetchContent_Declare(
     nlohmann_json
