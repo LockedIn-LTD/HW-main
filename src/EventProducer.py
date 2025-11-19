@@ -3,7 +3,7 @@ from EventService import EventService
 
 service = EventService(
     project_id = "drivesense-c1d4c",
-    credentials_file = "src/db/database_key.json"
+    credentials_file = "firebase-admin.json"
 )
 
 event = Event(
@@ -17,5 +17,5 @@ event = Event(
     vehicle_speed=62
 )
 
-created = service.create_event(event, driver_id="driver_001")
+created = service.create_event(event, driver_id="driver_alice_rogan_1763414940586")
 print("Uploaded:", created)

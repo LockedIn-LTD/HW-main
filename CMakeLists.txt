@@ -9,11 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --- 1. Dependency Management ---
 # ------------------------------------------------------------------------
 
-# A. Find essential libraries
-find_library(I2C_LIB i2c)
-if(NOT I2C_LIB)
-    message(FATAL_ERROR "libi2c not found. Install with: sudo apt install libi2c-dev")
-endif()
 
 # B. Find cURL (HTTP Client for Firebase REST)
 find_package(CURL REQUIRED)

@@ -34,4 +34,6 @@
 /.vscode
 /build/*
 /out/*
-
+*.pyc
+__pycache__
+firebase-admin.json
