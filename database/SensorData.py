@@ -2,13 +2,9 @@ from dataclasses import dataclass, asdict
 from typing import Dict
 
 @dataclass
-class Event:
+class SensorData:
     """Represents a logged driver event."""
-    eventId: str
     status: str
-    timeStamp: str
-    date: str
-    videoLink: str
     heartRate: int = 0
     bloodOxygenLevel: int = 0
     vehicleSpeed: int = 0
