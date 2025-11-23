@@ -11,6 +11,7 @@
 #include <mutex>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include <zmq.hpp>
 
 using json = nlohmann::json;
 
@@ -50,6 +51,7 @@ using namespace std;
 // Define I2C Buses
 string I2C_BUS_1 = "/dev/i2c-1";
 string I2C_BUS_7 = "/dev/i2c-7";
+string SENSOR_TOPIC = "tcp://*:5557";
 
 AggregateSensorData g_sensor_data;
 ADS1115 pressureSensor (I2C_BUS_7, 0x48);
@@ -58,7 +60,6 @@ MAX30102 heartbeatSensor (I2C_BUS_7);
 MAX30102 heartbeatSensor2 (I2C_BUS_1);
 
 void setupSensors() {
-    //!accelerometerSensor.calibrate(100) => this one runs its own thread
     accelerometerSensor.calibrate(100);
     if (!pressureSensor.initialize() || !heartbeatSensor.initialize() || !heartbeatSensor2.initialize()) {
         if(VERBOSE_OUT){
@@ -67,7 +68,10 @@ void setupSensors() {
         }
         exit(1);
     }
-    //initalie json
+    if(VERBOSE_OUT){
+        std::lock_guard<std::mutex> lock(cout_mutex);
+        cout << "Sensors initialized successfully." << endl;
+    }
 }
 
 
@@ -137,6 +141,7 @@ void imuSensorTask() {
     }
 }
 
+
 void heartrateTask(){
     SensorData data = {0};
     while (true) {
@@ -198,7 +203,7 @@ void heartrateTask2(){
     }
 }
 
-json createFirebaseJsonObject() {
+json createJsonObject() {
     // Safely read the aggregated data
     AggregateSensorData current_data;
     {
@@ -247,16 +252,23 @@ json createFirebaseJsonObject() {
 }
 
 
-void printDataTask() {
+void printAndPublishDataTask() {
+    zmq::context_t context;
+    zmq::socket_t socket(context, ZMQ_PUB);
+    socket.bind(SENSOR_TOPIC);
+    std::cout << "Established ZMQ server on " << SENSOR_TOPIC << " for sensor data" << std::endl;
+
     while (true) {
-        json data_to_push = createFirebaseJsonObject();
-        //pushJsonToFirebase(data_to_push, FIREBASE_DB_URL, FIREBASE_SECRET);
+        json data_to_publish = createJsonObject();
+        socket.send(zmq::buffer(SENSOR_TOPIC), zmq::send_flags::sndmore);
+        socket.send(zmq::buffer(data_to_publish.dump()), zmq::send_flags::none);
         std::lock_guard<std::mutex> lock(cout_mutex);
         std::cout << data_to_push << std::endl;
         // Push data every 5 seconds (adjust as needed)
-        this_thread::sleep_for(chrono::milliseconds(2000));
+        this_thread::sleep_for(chrono::milliseconds(5000));
     }
 }
+
 
 int main() {
     VERBOSE_OUT = false;
@@ -267,18 +279,15 @@ int main() {
     thread imuSensorRead(imuSensorTask);
     thread heartrateSensorRead(heartrateTask);
     thread heartrateSensorRead2(heartrateTask2);
+    thread printandPubData(printAndPublishDataTask);
 
-    if(VERBOSE_OUT){
-        
-    }
-    
-    thread printData(printDataTask);
-    printData.join();
+
+    printandPubData.join();
     pressureSensorRead.join();
     imuSensorRead.join();
     heartrateSensorRead.join();
     heartrateSensorRead2.join();
-    
+
 
     return 0;
 }

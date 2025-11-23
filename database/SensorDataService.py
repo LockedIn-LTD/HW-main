@@ -2,8 +2,8 @@ PROJECT_ID = "drivesense-c1d4c"
 EVENT_COLLECTION = "events"
 DRIVER_COLLECTION = "drivers"
 from typing import Dict
-from SensorData import SensorData
-from Database import Database
+from database.SensorData import SensorData
+from database.Database import Database
 
 class SensorDataService:
     """
