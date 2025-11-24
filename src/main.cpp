@@ -60,7 +60,7 @@ MAX30102 heartbeatSensor (I2C_BUS_7);
 MAX30102 heartbeatSensor2 (I2C_BUS_1);
 
 void setupSensors() {
-    accelerometerSensor.calibrate(100);
+    accelerometerSensor.calibrate(500);
     if (!pressureSensor.initialize() || !heartbeatSensor.initialize() || !heartbeatSensor2.initialize()) {
         if(VERBOSE_OUT){
             std::lock_guard<std::mutex> lock(cout_mutex);
@@ -263,7 +263,7 @@ void printAndPublishDataTask() {
         socket.send(zmq::buffer(SENSOR_TOPIC), zmq::send_flags::sndmore);
         socket.send(zmq::buffer(data_to_publish.dump()), zmq::send_flags::none);
         std::lock_guard<std::mutex> lock(cout_mutex);
-        std::cout << data_to_push << std::endl;
+        std::cout << data_to_publish << std::endl;
         // Push data every 5 seconds (adjust as needed)
         this_thread::sleep_for(chrono::milliseconds(5000));
     }

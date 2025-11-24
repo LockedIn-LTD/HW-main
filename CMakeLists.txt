@@ -53,6 +53,7 @@ target_link_libraries(MAPPLE-WALNUT
         pthread 
         CURL::libcurl
         nlohmann_json
+        zmq
 )
 
 # Optional: define a macro for bus detection
