@@ -263,7 +263,7 @@ void printAndPublishDataTask() {
         socket.send(zmq::buffer(SENSOR_TOPIC), zmq::send_flags::sndmore);
         socket.send(zmq::buffer(data_to_publish.dump()), zmq::send_flags::none);
         std::lock_guard<std::mutex> lock(cout_mutex);
-        std::cout << data_to_push << std::endl;
+        std::cout << data_to_publish << std::endl;
         // Push data every 5 seconds (adjust as needed)
         this_thread::sleep_for(chrono::milliseconds(5000));
     }
