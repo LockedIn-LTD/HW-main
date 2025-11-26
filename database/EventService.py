@@ -2,8 +2,8 @@ PROJECT_ID = "drivesense-c1d4c"
 EVENT_COLLECTION = "events"
 DRIVER_COLLECTION = "drivers"
 from typing import Dict
-from EventModel import Event
-from Database import Database
+from database.EventModel import Event
+from database.Database import Database
 
 class EventService:
     """
