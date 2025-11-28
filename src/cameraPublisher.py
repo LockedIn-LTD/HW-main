@@ -11,44 +11,42 @@ import argparse
 # --- Configuration (Defaults/Constants) ---
 DEFAULT_WIDTH = 1280
 DEFAULT_HEIGHT = 720
+DEFAULT_FPS = 15 # Set desired FPS here
 # ---------------------
 
 # IMX219 modes (Argus):
 # 0: 3280x2464 @21, 1: 3280x1848 @28, 2: 1920x1080 @30, 3: 1640x1232 @30, 4: 1280x720 @60
 
 
-def get_sensor_mode_and_fps(width, height):
-    """Maps desired resolution to the optimal IMX219 sensor mode and FPS."""
-    mapping = {
-        (3280, 2464): (0, 21),
-        (3280, 1848): (1, 28),
-        (1920, 1080): (2, 30),
-        (1640, 1232): (3, 30),
-        (1280, 720):  (4, 60),
-    }
-    
-    # Check if the requested resolution exactly matches a known mode
-    return mapping.get((int(width), int(height)), (2, 15)) # Default to 1920x1080 @30
-
-
-def gst_pipeline(sensor_id, width, height, fps=15, flip=2):
+def gst_pipeline(sensor_id, width, height, fps=DEFAULT_FPS, flip=0):
     """Generates the GStreamer pipeline string for nvarguscamerasrc."""
 
-    # The pipeline outputs BGR format frames ready for OpenCV
+    # Note: nvarguscamerasrc will likely run at 60 FPS for 1280x720,
+    # so we must explicitly cap the rate using the 'videorate' element.
+    print(f"Applying framerate constraint to {fps} FPS using videorate element.")
+    
     return (
-        f"nvarguscamerasrc sensor-id={int(sensor_id)} "
-        f"bufapi-version=1 ! "
-        f"video/x-raw(memory:NVMM), width=(int){int(width)}, height=(int){int(height)}, "
-        f"framerate=(fraction){int(fps)}/1, format=(string)NV12 ! "
-        f"nvvidconv flip-method={int(flip)} ! "
-        f"video/x-raw, format=(string)BGRx, width=(int){int(width)}, height=(int){int(height)} ! "
+        f"nvarguscamerasrc sensor-id={sensor_id} bufapi-version=1 ! "
+        f"video/x-raw(memory:NVMM), width={width}, height={height}, format=NV12, framerate={fps}/1 ! " # Use native Argus framerate limit
+        
+        # 2. Convert/Flip/Scale in Hardware (NVMM to NVMM BGRx)
+        f"nvvidconv flip-method={flip} ! "
+        f"video/x-raw(memory:NVMM), format=BGRx ! "
+
+        # 3. Convert from NVMM (hardware) to CPU memory (This is the critical step)
+        f"nvvidconv ! " # No arguments needed, just for NVMM -> CPU transition
+        f"video/x-raw, format=BGRx ! "
+        
+        # 4. Convert BGRx (4-channel) to BGR (3-channel) in CPU (if necessary)
         f"videoconvert ! "
-        f"appsink caps=video/x-raw,format=(string)BGR,width=(int){int(width)},height=(int){int(height)} "
-        f"drop=true max-buffers=1 sync=false"
-    )
+        f"video/x-raw, format=BGR, width={width}, height={height} ! "
+        
+        # Optional: Use videorate if frame dropping is still required
+        # Note: Setting framerate in step 1 is often enough.
+        f"appsink drop=true max-buffers=1 sync=false")
 
 
-def open_nvargus(sensor_id, width, height, fps=15, flip=2):
+def open_nvargus(sensor_id, width, height, fps=DEFAULT_FPS, flip=0):
     """Opens the GStreamer camera capture object and performs a warmup."""
     
     pipeline = gst_pipeline(sensor_id, width, height,
@@ -90,7 +88,7 @@ def start_driver(camera_id, zmq_port, width, height, flip):
     
     try:
         # Pass new arguments to the camera opening function
-        cap = open_nvargus(camera_id, width, height, flip=flip) 
+        cap = open_nvargus(camera_id, width, height, fps=DEFAULT_FPS, flip=flip) 
     except RuntimeError as e:
         print(f"[ERROR] {e}")
         sys.exit(1)
@@ -98,6 +96,7 @@ def start_driver(camera_id, zmq_port, width, height, flip):
     # Main frame loop
     try:
         while True:
+            # This read will now be naturally limited to 15 FPS by the videorate element
             ret, frame = cap.read()
             if not ret or frame is None:
                 # If frame reading fails, wait and continue the loop
@@ -149,7 +148,7 @@ def parse_args():
     )
     # Argument for flip
     parser.add_argument(
-        '--flip', type=int, default=2, 
+        '--flip', type=int, default=0, 
         help=f'Flip method for nvvidconv (0=none, 1=horizontal, 2=rotate 180, 3=vertical, 4=horiz+diag, 5=horiz+vert, 6=vert+diag, 7=rotate 90, 8=rotate 270) (default: 2).'
     )
     

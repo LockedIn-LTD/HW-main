@@ -51,7 +51,8 @@ using namespace std;
 // Define I2C Buses
 string I2C_BUS_1 = "/dev/i2c-1";
 string I2C_BUS_7 = "/dev/i2c-7";
-string SENSOR_TOPIC = "tcp://*:5557";
+string SENSOR_TOPIC = "tcp://*:5558";
+string SENSOR_TOPIC_NAME = "sensor_out";
 
 AggregateSensorData g_sensor_data;
 ADS1115 pressureSensor (I2C_BUS_7, 0x48);
@@ -260,12 +261,12 @@ void printAndPublishDataTask() {
 
     while (true) {
         json data_to_publish = createJsonObject();
-        socket.send(zmq::buffer(SENSOR_TOPIC), zmq::send_flags::sndmore);
+        socket.send(zmq::buffer(SENSOR_TOPIC_NAME), zmq::send_flags::sndmore);
         socket.send(zmq::buffer(data_to_publish.dump()), zmq::send_flags::none);
         std::lock_guard<std::mutex> lock(cout_mutex);
         std::cout << data_to_publish << std::endl;
-        // Push data every 5 seconds (adjust as needed)
-        this_thread::sleep_for(chrono::milliseconds(5000));
+        // Push data every 1 second
+        this_thread::sleep_for(chrono::milliseconds(1000));
     }
 }
 

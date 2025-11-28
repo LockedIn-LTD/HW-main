@@ -24,7 +24,7 @@ class EventService:
             event_data["driverId"] = driver_id
 
             # Save event in Firestore under /events/{eventId}
-            self.db.set_document(EVENT_COLLECTION, event.event_id, event_data)
+            self.db.set_document(EVENT_COLLECTION, event.eventId, event_data)
 
             # Fetch driver document
             driver_data = self.db.get_document(DRIVER_COLLECTION, driver_id)

@@ -4,7 +4,7 @@ from typing import Dict
 @dataclass
 class Event:
     """Represents a logged driver event."""
-    event_id: str
+    eventId: str
     status: str
     timeStamp: str
     date: str
